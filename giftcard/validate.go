@@ -14,8 +14,8 @@ const (
     ReasonUnknown        Reason = "unknown"
     ReasonValid          Reason = "valid"
     ReasonEmptyInput     Reason = "empty_input"
+	ReasonTooShort      Reason = "too_short_code"
     ReasonInvalidFormat  Reason = "invalid_format"
-    ReasonNotFound       Reason = "not_found"
     ReasonInvalidPhone   Reason = "invalid_phone"
 )
 
