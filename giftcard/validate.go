@@ -26,11 +26,6 @@ func (r Reason) String() string {
     return string(r)
 }
 
-type GiftCard struct {
-	Code     string
-	Phone    string // plain phone number or hashed phone number
-}
-
 func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string) (bool, Reason) {
 	if len(giftCardCode) < 4 {
 		// code too short to contain a valid suffix
