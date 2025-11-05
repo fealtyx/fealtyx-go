@@ -1,9 +1,10 @@
 package giftcard
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
-	"time"
+    utils "github.com/fealtyx/fealtyx-go/giftcard/utils"
 )
 
 // Reason describes why a validation passed or failed.
@@ -15,9 +16,7 @@ const (
     ReasonEmptyInput     Reason = "empty_input"
     ReasonInvalidFormat  Reason = "invalid_format"
     ReasonNotFound       Reason = "not_found"
-    ReasonPhoneMismatch  Reason = "phone_mismatch"
-    ReasonExpired        Reason = "expired"
-    ReasonAlreadyRedeemed Reason = "already_redeemed"
+    ReasonInvalidPhone   Reason = "invalid_phone"
 )
 
 func (r Reason) String() string {
@@ -27,39 +26,92 @@ func (r Reason) String() string {
     return string(r)
 }
 
-
 type GiftCard struct {
 	Code     string
 	Phone    string // plain phone number or hashed phone number
 }
 
-var codeFormat = regexp.MustCompile(`^[A-Z0-9]{6,12}$`)
-
-
-func ValidateCode(phone, code string) (bool, Reason) {
-	// basic empties
-	if strings.TrimSpace(phone) == "" || strings.TrimSpace(code) == "" {
-		return false, ReasonEmptyInput
-	}
-
-	code = strings.ToUpper(strings.TrimSpace(code))
-
-	if !codeFormat.MatchString(code) {
+func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string) (bool, Reason) {
+	if len(giftCardCode) < 4 {
+		// code too short to contain a valid suffix
 		return false, ReasonInvalidFormat
 	}
 
-	
+	if !checkValidPhoneNumber(phoneNumber) {
+		return false, ReasonInvalidPhone
+	}
+
+	expectedSuffix := strings.ToLower(getGiftCardCodeIdentifier(domain, phoneNumber))
+	actualSuffix := strings.ToLower(giftCardCode[len(giftCardCode)-4:])
+
+	// Case-insensitive match since generation uppercases code
+	valid := strings.EqualFold(expectedSuffix, actualSuffix)
+
+	if !valid {
+		return false, ReasonInvalidFormat
+	}
 
 	return true, ReasonValid
 }
 
-// normalizePhoneToDigits strips everything except digits and returns digits-only
-func normalizePhoneToDigits(p string) string {
-	var b strings.Builder
-	for _, r := range p {
-		if r >= '0' && r <= '9' {
-			b.WriteRune(r)
+
+func getGiftCardCodeIdentifier(domain, phoneNumber string) string {
+
+	var processedPhoneNumber string
+
+	//check if phone number is already hashed
+	if len(phoneNumber) == 64  && utils.IsSHA256Hash(phoneNumber) {
+		processedPhoneNumber = phoneNumber
+	} else {
+		if !strings.HasPrefix(phoneNumber, "+91") {
+			// If the phone number doesn't start with +91, add it
+			phoneNumber = "+91" + phoneNumber
 		}
+		// Hash the phone number using SHA-256
+		processedPhoneNumber = utils.GetSHA256Hash(phoneNumber)
 	}
-	return b.String()
+
+	// Character set for alphanumeric (A-Z + 0-9)
+	const alphanum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	const charsetLen = len(alphanum)
+	input := domain + processedPhoneNumber
+	// Convert to lower case
+	input = strings.ToLower(input)
+
+	hash := utils.GetSHA256Hash(input)
+
+	// First 2 hex characters of the hash
+	c1 := hash[0]
+	c2 := hash[1]
+
+	// Convert to 0–15 values
+	b1 := utils.HexCharToByte(c1)
+	b2 := utils.HexCharToByte(c2)
+
+	// Derive two new characters from the first two
+	xor := b1 ^ b2
+	idx1 := int(xor) % charsetLen
+	idx2 := int(b1+b2) % charsetLen
+
+	return fmt.Sprintf("%c%c%c%c", c1, c2, alphanum[idx1], alphanum[idx2])
+}
+
+
+func checkValidPhoneNumber(phone string) bool {
+	phone = strings.TrimSpace(phone)
+
+
+	if utils.IsSHA256Hash(phone) {
+		return true
+	}
+
+	// Case 1: +91 + 10 digits → total 13 chars
+	if strings.HasPrefix(phone, "+91") {
+		re := regexp.MustCompile(`^\+91[1-9]\d{9}$`)
+		return re.MatchString(phone)
+	}
+
+	// Case 2: plain 10 digits (no +91)
+	re := regexp.MustCompile(`^[1-9]\d{9}$`)
+	return re.MatchString(phone)
 }
