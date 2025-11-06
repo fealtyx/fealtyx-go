@@ -2,38 +2,47 @@ package giftcard
 
 import (
 	"fmt"
+	utils "github.com/fealtyx/fealtyx-go/giftcard/utils"
 	"regexp"
 	"strings"
-    utils "github.com/fealtyx/fealtyx-go/giftcard/utils"
 )
 
 // Reason describes why a validation passed or failed.
 type Reason string
 
 const (
-    ReasonUnknown        Reason = "unknown"
-    ReasonValid          Reason = "valid"
-    ReasonEmptyInput     Reason = "empty_input"
-	ReasonTooShort      Reason = "too_short_code"
-    ReasonInvalidFormat  Reason = "invalid_format"
-    ReasonInvalidPhone   Reason = "invalid_phone"
+	ReasonEmpty              Reason = ""
+	ReasonValid              Reason = "valid"
+	ReasonEmptyInput         Reason = "empty_input"
+	ReasonTooShort           Reason = "too_short_code"
+	ReasonInvalidFormat      Reason = "invalid_format"
+	ReasonInvalidPhone       Reason = "invalid_phone"
+	ReasonInvalidOrderAmount Reason = "invalid_order_amount"
 )
 
 func (r Reason) String() string {
-    if r == "" {
-        return string(ReasonUnknown)
-    }
-    return string(r)
+	if r == "" {
+		return string(ReasonEmpty)
+	}
+	return string(r)
 }
 
-func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string) (bool, Reason) {
+func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string, orderAmount float64) (is_applicable bool, is_fealtyx_discount_code bool, reason Reason) {
 	if len(giftCardCode) < 4 {
 		// code too short to contain a valid suffix
-		return false, ReasonInvalidFormat
+		return true, false, ReasonEmpty
+	}
+
+	if !strings.HasPrefix(giftCardCode, "FLX") && !strings.HasPrefix(giftCardCode, "flx") {
+		return true, false, ReasonEmpty
 	}
 
 	if !checkValidPhoneNumber(phoneNumber) {
-		return false, ReasonInvalidPhone
+		return false, true, ReasonInvalidPhone
+	}
+
+	if orderAmount <= 0 {
+		return false, true, ReasonInvalidOrderAmount
 	}
 
 	expectedSuffix := strings.ToLower(getGiftCardCodeIdentifier(domain, phoneNumber))
@@ -43,19 +52,18 @@ func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string) (bool, Reaso
 	valid := strings.EqualFold(expectedSuffix, actualSuffix)
 
 	if !valid {
-		return false, ReasonInvalidFormat
+		return false, true, ReasonInvalidFormat
 	}
 
-	return true, ReasonValid
+	return true, true, ReasonValid
 }
-
 
 func getGiftCardCodeIdentifier(domain, phoneNumber string) string {
 
 	var processedPhoneNumber string
 
 	//check if phone number is already hashed
-	if len(phoneNumber) == 64  && utils.IsSHA256Hash(phoneNumber) {
+	if utils.IsSHA256Hash(phoneNumber) {
 		processedPhoneNumber = phoneNumber
 	} else {
 		if !strings.HasPrefix(phoneNumber, "+91") {
@@ -91,10 +99,8 @@ func getGiftCardCodeIdentifier(domain, phoneNumber string) string {
 	return fmt.Sprintf("%c%c%c%c", c1, c2, alphanum[idx1], alphanum[idx2])
 }
 
-
 func checkValidPhoneNumber(phone string) bool {
 	phone = strings.TrimSpace(phone)
-
 
 	if utils.IsSHA256Hash(phone) {
 		return true
