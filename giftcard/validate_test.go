@@ -13,67 +13,94 @@ func TestValidateGiftCardCode(t *testing.T) {
 		domain       string
 		phoneNumber  string
 		giftCardCode string
-		want         bool
-		want2        giftcard.Reason
+		orderAmount  float64
+		is_applicable bool
+		is_fealtyx_discount_code bool
+		reason        giftcard.Reason
 	}{
 		{
 			name: "valid code",
 			domain: "example.com",
 		    phoneNumber: "+918989898989",
 		    giftCardCode: "FLX123415EG",
-		    want: true,
-		    want2: giftcard.ReasonValid,
+			orderAmount: 100.0,
+		    is_applicable: true,
+			is_fealtyx_discount_code: true,
+		    reason: giftcard.ReasonValid,
 		},
 		{
 			name: "invalid code - wrong suffix",
 			domain: "example.com",
 		    phoneNumber: "+918989898989",
 		    giftCardCode: "FLX1234ABCD",
-		    want: false,
-		    want2: giftcard.ReasonInvalidFormat,
+			orderAmount: 100.0,
+		    is_applicable: false,
+		    is_fealtyx_discount_code:true,
+		    reason: giftcard.ReasonInvalidFormat,
 		},
 		{
-			name: "invalid code - invalid phone",
+			name: "fealtyx code - invalid phone",
 			domain: "example.com",
+			orderAmount: 100.0,
 		    phoneNumber: "777777",
-		    giftCardCode: "FLX123415EG",
-		    want: false,
-		    want2: giftcard.ReasonInvalidPhone,
+		    giftCardCode: "FLX123415EG",	
+		    is_applicable: false,
+		    is_fealtyx_discount_code: true,
+		    reason: giftcard.ReasonInvalidPhone,
 		},
 		{
 			name: "invalid code - missing prefix",
 			domain: "example.com",
 		    phoneNumber: "+918989898989",
-					    giftCardCode: "123415EG",
-		    want: false,
-		    want2: giftcard.ReasonInvalidFormat,			
+		    giftCardCode: "123415EG",
+			orderAmount: 100.0,
+		    is_applicable: true,
+		    is_fealtyx_discount_code: false,
+		    reason: "",
 		},
 		{
 			name: "invalid code - short code",
 			domain: "example.com",
 		    phoneNumber: "+918989898989",
 		    giftCardCode: "FL1",
-		    want: false,
-		    want2: giftcard.ReasonTooShort,
+			orderAmount: 100.0,
+		    is_applicable: true,
+		    is_fealtyx_discount_code: false,
+		    reason: "",
 		},
 		{
 			name :"valid code with hashed phone",
 			domain: "example.com",
 		    phoneNumber: utils.GetSHA256Hash("+918989898989"),
 			giftCardCode: "FLX123415EG",
-			want: true,
-			want2: giftcard.ReasonValid,
+			orderAmount: 100.0,
+			is_applicable: true,
+			is_fealtyx_discount_code: true,
+			reason: giftcard.ReasonValid,
+		},
+			{
+			name :"valid code with hashed phone but no order amount",
+			domain: "example.com",
+		    phoneNumber: utils.GetSHA256Hash("+918989898989"),
+			giftCardCode: "FLX123415EG",
+			is_applicable: false,
+			is_fealtyx_discount_code: true,
+			reason: giftcard.ReasonInvalidOrderAmount,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got2 := giftcard.ValidateGiftCardCode(tt.domain, tt.phoneNumber, tt.giftCardCode)
-			if got != tt.want {
-				t.Errorf("ValidateGiftCardCode() = %v, want %v", got, tt.want)
+			got, got2, gotReason := giftcard.ValidateGiftCardCode(tt.domain, tt.phoneNumber, tt.giftCardCode, tt.orderAmount)
+			if got != tt.is_applicable {
+				t.Errorf("ValidateGiftCardCode() = %v, want %v", got, tt.is_applicable)
 			}
-			if got2 != tt.want2 {
-				t.Errorf("ValidateGiftCardCode() = %v, want %v", got2, tt.want2)
+			if got2 != tt.is_fealtyx_discount_code {
+				t.Errorf("ValidateGiftCardCode() = %v, want %v", got2, tt.is_fealtyx_discount_code)
+			}
+			if gotReason != tt.reason {
+				t.Errorf("ValidateGiftCardCode() = %v, want %v", gotReason, tt.reason)
 			}
 		})
 	}
 }
+
