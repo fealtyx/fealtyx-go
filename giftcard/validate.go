@@ -11,18 +11,16 @@ import (
 type Reason string
 
 const (
-	ReasonEmpty              Reason = ""
-	ReasonValid              Reason = "valid"
-	ReasonEmptyInput         Reason = "empty_input"
-	ReasonTooShort           Reason = "too_short_code"
-	ReasonVoucherNotEligible      Reason = "voucher_not_eligible_for_the_user"
-	ReasonInvalidPhone       Reason = "invalid_phone"
-	ReasonInvalidOrderAmount Reason = "invalid_order_amount"
+	ReasonEmptyInput         Reason = "Empty Input"
+	ReasonTooShort           Reason = "Code Too Short"
+	ReasonVoucherNotEligible      Reason = "Voucher Not Eligible For The User"
+	ReasonInvalidPhone       Reason = "Invalid Phone"
+	ReasonInvalidOrderAmount Reason = "Invalid Order Amount"
 )
 
 func (r Reason) String() string {
 	if r == "" {
-		return string(ReasonEmpty)
+		return string("")
 	}
 	return string(r)
 }
@@ -30,13 +28,13 @@ func (r Reason) String() string {
 func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string, orderAmount float64) (is_applicable bool, is_fealtyx_discount_code bool, reason Reason) {
 	if len(giftCardCode) < 4 {
 		// code too short to contain a valid suffix
-		return true, false, ReasonEmpty
+		return true, false, ""
 	}
 
 	giftCardCode=strings.ToLower(giftCardCode)
 
 	if !strings.HasPrefix(giftCardCode, "flx") {
-		return true, false, ReasonEmpty
+		return true, false, ""
 	}
 
 	if !checkValidPhoneNumber(phoneNumber) {
@@ -53,7 +51,7 @@ func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string, orderAmount 
 		return false, true, ReasonVoucherNotEligible
 	}
 
-	return true, true, ReasonValid
+	return true, true, ""
 }
 
 func getGiftCardCodeIdentifier(domain, phoneNumber string) string {
