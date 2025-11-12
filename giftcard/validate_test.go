@@ -98,13 +98,22 @@ func TestValidateGiftCardCode(t *testing.T) {
 			reason: "",
 		},
 					{
-			name :"valid code with hashed phone but empty partner entity id",
+			name :"valid code with hashed phone but empty domain",
 			domain: "",
 		    phoneNumber: utils.GetSHA256Hash("+918989898989"),
 			giftCardCode: "FLX123415EG",
 			is_applicable: true,
 			is_fealtyx_discount_code: false,
-			reason: giftcard.ReasonInvalidPartnerEntityId,
+			reason: giftcard.ReasonInvalidDomain,
+		},
+					{
+			name :"valid code with hashed phone but invalid domain",
+			domain: "example\x00.com",
+		    phoneNumber: utils.GetSHA256Hash("+918989898989"),
+			giftCardCode: "FLX123415EG",
+			is_applicable: true,
+			is_fealtyx_discount_code: false,
+			reason: giftcard.ReasonInvalidDomain,
 		},
 	}
 	for _, tt := range tests {
