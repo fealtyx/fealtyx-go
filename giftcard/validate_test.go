@@ -26,7 +26,7 @@ func TestValidateGiftCardCode(t *testing.T) {
 			orderAmount: 100.0,
 		    is_applicable: true,
 			is_fealtyx_discount_code: true,
-		    reason: giftcard.ReasonValid,
+		    reason:"",
 		},
 		{
 			name: "invalid code - wrong suffix",
@@ -76,7 +76,17 @@ func TestValidateGiftCardCode(t *testing.T) {
 			orderAmount: 100.0,
 			is_applicable: true,
 			is_fealtyx_discount_code: true,
-			reason: giftcard.ReasonValid,
+			reason: "",
+		},
+			{
+			name :"valid code with non hashed phone",
+			domain: "example.com",
+		    phoneNumber: "+918989898989",
+			giftCardCode: "FLX123415EG",
+			orderAmount: 100.0,
+			is_applicable: true,
+			is_fealtyx_discount_code: true,
+			reason: "",
 		},
 			{
 			name :"valid code with hashed phone but no order amount",
@@ -85,7 +95,7 @@ func TestValidateGiftCardCode(t *testing.T) {
 			giftCardCode: "FLX123415EG",
 			is_applicable: true,
 			is_fealtyx_discount_code: true,
-			reason: giftcard.ReasonValid,
+			reason: "",
 		},
 	}
 	for _, tt := range tests {
