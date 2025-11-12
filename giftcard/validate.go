@@ -122,6 +122,13 @@ func checkValidPhoneNumber(phone string) bool {
 }
 
 func sanitizeDomain(input string) (string, error) {
+	input = strings.TrimSpace(input)
+
+	// Add scheme if missing to make it a valid URL
+    if !strings.Contains(input, "://") {
+        input = "https://" + input
+    }
+
     parsed, err := url.Parse(input)
     if err != nil {
         return "", fmt.Errorf("invalid domain: %w", err)
