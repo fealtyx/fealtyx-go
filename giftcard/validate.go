@@ -11,11 +11,12 @@ import (
 type Reason string
 
 const (
-	ReasonEmptyInput         Reason = "Empty Input"
-	ReasonTooShort           Reason = "Code Too Short"
-	ReasonVoucherNotEligible      Reason = "Voucher Not Eligible For The User"
-	ReasonInvalidPhone       Reason = "Invalid Phone"
-	ReasonInvalidOrderAmount Reason = "Invalid Order Amount"
+	ReasonEmptyInput             Reason = "Empty Input"
+	ReasonTooShort               Reason = "Code Too Short"
+	ReasonVoucherNotEligible     Reason = "Voucher Not Eligible For The User"
+	ReasonInvalidPhone           Reason = "Invalid Phone"
+	ReasonInvalidPartnerEntityId Reason = "Invalid Partner Entity Id"
+	ReasonInvalidOrderAmount     Reason = "Invalid Order Amount"
 )
 
 func (r Reason) String() string {
@@ -31,14 +32,18 @@ func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string, orderAmount 
 		return true, false, ""
 	}
 
-	giftCardCode=strings.ToLower(giftCardCode)
+	giftCardCode = strings.ToLower(giftCardCode)
 
 	if !strings.HasPrefix(giftCardCode, "flx") {
 		return true, false, ""
 	}
 
 	if !checkValidPhoneNumber(phoneNumber) {
-		return false, true, ReasonInvalidPhone
+		return true, false, ReasonInvalidPhone
+	}
+
+	if domain==""{
+		return true, false , ReasonInvalidPartnerEntityId
 	}
 
 	expectedSuffix := strings.ToLower(getGiftCardCodeIdentifier(domain, phoneNumber))
