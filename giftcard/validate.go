@@ -2,9 +2,11 @@ package giftcard
 
 import (
 	"fmt"
-	utils "github.com/fealtyx/fealtyx-go/giftcard/utils"
+	"net/url"
 	"regexp"
 	"strings"
+
+	utils "github.com/fealtyx/fealtyx-go/giftcard/utils"
 )
 
 // Reason describes why a validation passed or failed.
@@ -42,8 +44,9 @@ func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string, orderAmount 
 		return true, false, ReasonInvalidPhone
 	}
 
-	if domain==""{
-		return true, false , ReasonInvalidDomain
+	domain, err := sanitizeDomain(domain)
+	if err != nil {
+		return true, false, ReasonInvalidDomain
 	}
 
 	expectedSuffix := strings.ToLower(getGiftCardCodeIdentifier(domain, phoneNumber))
@@ -116,4 +119,19 @@ func checkValidPhoneNumber(phone string) bool {
 	// Case 2: plain 10 digits (no +91)
 	re := regexp.MustCompile(`^[1-9]\d{9}$`)
 	return re.MatchString(phone)
+}
+
+func sanitizeDomain(input string) (string, error) {
+    parsed, err := url.Parse(input)
+    if err != nil {
+        return "", fmt.Errorf("invalid domain: %w", err)
+    }
+    
+    // Extract host and convert to lowercase
+    domain := strings.ToLower(parsed.Hostname())
+    if domain == "" {
+        return "", fmt.Errorf("empty domain")
+    }
+    
+    return domain, nil
 }
