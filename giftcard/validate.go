@@ -15,7 +15,7 @@ const (
 	ReasonValid              Reason = "valid"
 	ReasonEmptyInput         Reason = "empty_input"
 	ReasonTooShort           Reason = "too_short_code"
-	ReasonInvalidFormat      Reason = "invalid_format"
+	ReasonVoucherNotEligible      Reason = "voucher_not_eligible_for_the_user"
 	ReasonInvalidPhone       Reason = "invalid_phone"
 	ReasonInvalidOrderAmount Reason = "invalid_order_amount"
 )
@@ -33,16 +33,14 @@ func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string, orderAmount 
 		return true, false, ReasonEmpty
 	}
 
-	if !strings.HasPrefix(giftCardCode, "FLX") && !strings.HasPrefix(giftCardCode, "flx") {
+	giftCardCode=strings.ToLower(giftCardCode)
+
+	if !strings.HasPrefix(giftCardCode, "flx") {
 		return true, false, ReasonEmpty
 	}
 
 	if !checkValidPhoneNumber(phoneNumber) {
 		return false, true, ReasonInvalidPhone
-	}
-
-	if orderAmount <= 0 {
-		return false, true, ReasonInvalidOrderAmount
 	}
 
 	expectedSuffix := strings.ToLower(getGiftCardCodeIdentifier(domain, phoneNumber))
@@ -52,7 +50,7 @@ func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string, orderAmount 
 	valid := strings.EqualFold(expectedSuffix, actualSuffix)
 
 	if !valid {
-		return false, true, ReasonInvalidFormat
+		return false, true, ReasonVoucherNotEligible
 	}
 
 	return true, true, ReasonValid
