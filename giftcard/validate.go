@@ -14,8 +14,8 @@ const (
 	ReasonEmptyInput             Reason = "Empty Input"
 	ReasonTooShort               Reason = "Code Too Short"
 	ReasonVoucherNotEligible     Reason = "Voucher Not Eligible For The User"
-	ReasonInvalidPhone           Reason = "Invalid Phone"
-	ReasonInvalidPartnerEntityId Reason = "Invalid Partner Entity Id"
+	ReasonInvalidPhone           Reason = "Invalid Phone Number"
+	ReasonInvalidDomain          Reason = "Invalid Domain"
 	ReasonInvalidOrderAmount     Reason = "Invalid Order Amount"
 )
 
@@ -43,7 +43,7 @@ func ValidateGiftCardCode(domain, phoneNumber, giftCardCode string, orderAmount 
 	}
 
 	if domain==""{
-		return true, false , ReasonInvalidPartnerEntityId
+		return true, false , ReasonInvalidDomain
 	}
 
 	expectedSuffix := strings.ToLower(getGiftCardCodeIdentifier(domain, phoneNumber))
