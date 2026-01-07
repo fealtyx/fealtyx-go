@@ -27,7 +27,7 @@ func (r Reason) String() string {
 	return string(r)
 }
 
-func ValidateUnloqDiscountCode(domain, phoneNumber, giftCardCode string, orderAmount float64) (is_applicable bool, is_fealtyx_discount_code bool, reason Reason) {
+func ValidateUnloqDiscountCode(domain, phoneNumber, giftCardCode string, orderAmount float64) (is_applicable bool, is_unloq_discount_code bool, reason Reason) {
 	// First, clean the gift card code
 	giftCardCode = strings.ToLower(strings.TrimSpace(giftCardCode))
 
@@ -50,10 +50,10 @@ func ValidateUnloqDiscountCode(domain, phoneNumber, giftCardCode string, orderAm
 	first2 := last4[0:2]
 	actualLast2 := last4[2:]
 
-	// Step 1: Check if this is a Fealtyx gift card by checking if the last 2 characters match the expected last 2 characters
+	// Step 1: Check if this is an Unloq gift card by checking if the last 2 characters match the expected last 2 characters
 	expectedLast2 := generateLast2FromFirst2(first2)
 	if actualLast2 != expectedLast2 {
-		// If the last 2 don't match the expected pattern, the gift card is not a Fealtyx gift card
+		// If the last 2 don't match the expected pattern, the gift card is not an Unloq gift card
 		return true, false, ""
 	}
 
