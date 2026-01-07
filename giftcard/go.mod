@@ -1,5 +1,3 @@
-module github.com/fealtyx/fealtyx-go/giftcard
+module github.com/fealtyx/unloq-go/giftcard
 
 go 1.24.5
-
-

@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	utils "github.com/fealtyx/fealtyx-go/giftcard/utils"
+	utils "github.com/fealtyx/unloq-go/giftcard/utils"
 )
 
 // Reason describes why a validation passed or failed.

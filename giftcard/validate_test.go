@@ -3,8 +3,8 @@ package giftcard_test
 import (
 	"testing"
 
-	"github.com/fealtyx/fealtyx-go/giftcard"
-	"github.com/fealtyx/fealtyx-go/giftcard/utils"
+	"github.com/fealtyx/unloq-go/giftcard"
+	"github.com/fealtyx/unloq-go/giftcard/utils"
 )
 
 func TestValidateGiftCardCode(t *testing.T) {
