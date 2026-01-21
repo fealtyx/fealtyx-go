@@ -50,24 +50,26 @@ func ValidateUnloqDiscountCode(domain, phoneNumber, giftCardCode string, orderAm
 	first2 := last4[0:2]
 	actualLast2 := last4[2:]
 
+	codePrefix := giftCardCode[0 : len(giftCardCode)-4]
+
 	// Step 1: Check if this is an Unloq gift card by checking if the last 2 characters match the expected last 2 characters
-	expectedLast2 := generateLast2FromFirst2(first2)
+	expectedLast2 := generateLast2FromCodePrefix(codePrefix)
 	if actualLast2 != expectedLast2 {
 		// If the last 2 don't match the expected pattern, the gift card is not an Unloq gift card
 		return true, false, ""
 	}
 
-	// Sanitize domain
-	domain, err := sanitizeDomain(domain)
-	if err != nil {
-		return false, true, ReasonInvalidDomain
-	}
+	// // Sanitize domain
+	// domain, err := sanitizeDomain(domain)
+	// if err != nil {
+	// 	return false, true, ReasonInvalidDomain
+	// }
 
-	// Step 2: Verify full code - generate expected suffix
-	expectedSuffix := strings.ToLower(getGiftCardCodeIdentifier(domain, phoneNumber))
+	// Step 2: Verify first 2 characters match expected value from phone number
+	expectedFirst2 := strings.ToLower(getGiftCardCodeIdentifier(phoneNumber))
 
 	// Case-insensitive match
-	valid := strings.EqualFold(expectedSuffix, last4)
+	valid := strings.EqualFold(expectedFirst2, first2)
 	if !valid {
 		return false, true, ReasonVoucherNotEligible
 	}
@@ -102,32 +104,61 @@ func generateLast2FromFirst2(first2 string) string {
 	return string([]byte{alphanum[idx1], alphanum[idx2]})
 }
 
-func getGiftCardCodeIdentifier(domain, phoneNumber string) string {
+func generateLast2FromCodePrefix(codePrefix string) string {
+	const alphanum = "abcdefghijklmnopqrstuvwxyz0123456789"
+	const charsetLen = len(alphanum)
 
-	hashedPhoneNumber := utils.GetPhoneNumberHash(phoneNumber)
+	if len(codePrefix) == 0 {
+		return ""
+	}
+
+	prefixCodeHash := utils.GetSHA256Hash(strings.ToLower(codePrefix))
+
+	b1 := prefixCodeHash[0]
+	b2 := prefixCodeHash[1]
+
+	// Get xor and sum of first 2 characters
+	xor := b1 ^ b2
+	sum := b1 + b2
+
+	// Map xor and sum results to character set
+	idx1 := xor % byte(charsetLen)
+	idx2 := sum % byte(charsetLen)
+
+	return string([]byte{alphanum[idx1], alphanum[idx2]})
+}
+
+// generates a deterministic gift card code identifier using phone number
+func getGiftCardCodeIdentifier(phoneNumber string) string {
+
+	var processedPhoneNumber string
+
+	//check if phone number is already hashed
+	if utils.IsSHA256Hash(phoneNumber) {
+		processedPhoneNumber = phoneNumber
+	} else {
+		if !strings.HasPrefix(phoneNumber, "+91") {
+			// If the phone number doesn't start with +91, add it
+			phoneNumber = "+91" + phoneNumber
+		}
+		// Hash the phone number using SHA-256
+		processedPhoneNumber = utils.GetSHA256Hash(phoneNumber)
+	}
+
 	// Character set for alphanumeric (A-Z + 0-9)
 	const alphanum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	const charsetLen = len(alphanum)
-	input := domain + hashedPhoneNumber
+	input := processedPhoneNumber
 	// Convert to lower case
 	input = strings.ToLower(input)
 
 	hash := utils.GetSHA256Hash(input)
 
-	// First 2 hex characters of the hash
+	// First 2 hex characters of the hash from phone number
 	c1 := hash[0]
 	c2 := hash[1]
 
-	// Convert to 0–15 values
-	b1 := utils.HexCharToByte(c1)
-	b2 := utils.HexCharToByte(c2)
-
-	// Derive two new characters from the first two
-	xor := b1 ^ b2
-	idx1 := int(xor) % charsetLen
-	idx2 := int(b1+b2) % charsetLen
-
-	return fmt.Sprintf("%c%c%c%c", c1, c2, alphanum[idx1], alphanum[idx2])
+	return fmt.Sprintf("%c%c", c1, c2)
 }
 
 func sanitizeDomain(input string) (string, error) {
